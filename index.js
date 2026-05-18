@@ -4,7 +4,8 @@ const API_URL = 'https://fakestoreapi.com';
 
 
 // definimos la constante method y resource, que se asignan a los valores correspondientes de process.argv.
-const [, , method, resource, title, price, category] = process.argv; 
+const [, , method, resource, ...args] = process.argv;
+const [title, price, category] = args; 
 // El primer elemento es 'node', el segundo es el nombre del script, el tercero es el método HTTP, y el cuarto es el recurso. 
 // El primer y segundo elemento los ignoramos ya que son la ruta y el nombre del script, y debemos saltarlos para obtener el método y el recurso correctamente.
 // En este caso el método HTTP es 'GET' y el recurso es 'products'.
