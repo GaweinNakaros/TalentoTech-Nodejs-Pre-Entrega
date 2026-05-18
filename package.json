@@ -1,14 +1,18 @@
 {
-  "name": "talentotech-nodejs-pre-entrega",
+  "name": "pre-entrega",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js", 
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "mocha"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Jean Paul Ferreira",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "chai": "^5.3.3",
+    "mocha": "^11.7.5"
+  }
 }
