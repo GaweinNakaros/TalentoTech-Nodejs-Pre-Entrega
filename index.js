@@ -4,7 +4,7 @@ const API_URL = 'https://fakestoreapi.com';
 
 
 // definimos la constante method y resource, que se asignan a los valores correspondientes de process.argv.
-const [, , method, resource] = process.argv; 
+const [, , method, resource, title, price, category] = process.argv; 
 // El primer elemento es 'node', el segundo es el nombre del script, el tercero es el método HTTP, y el cuarto es el recurso. 
 // El primer y segundo elemento los ignoramos ya que son la ruta y el nombre del script, y debemos saltarlos para obtener el método y el recurso correctamente.
 // En este caso el método HTTP es 'GET' y el recurso es 'products'.
@@ -49,46 +49,119 @@ async function getProductId(productId) {
 }
 
 
+// Funcin para crear un producto nuevo
+// Esta funcion hace una solicitud POST a la API para agregar un producto con los datos que recibo por consola.
+async function crearProduct(title, price, category) {
+  const nuevoProducto = {
+    title: title,
+    price: Number(price), // convierto el precio a un número para asegurarme de que se envíe en el formato correcto a la api.
+    category: category
+  };
+
+  const respuesta = await fetch(`${API_URL}/products`, { // envio una solicitud POST a la URL de la API para crear un nuevo producto. El segundo argumento es un objeto de configuración que especifica el método HTTP, los encabezados y el cuerpo de la solicitud.
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(nuevoProducto)
+  }); // El body contiene el objeto nuevoProducto convertido a texto JSON porque la API recibe los datos en ese formato.
+
+// Ejemplo de Fake Store API para crear un producto nuevo usando fetch:
+//   const product = { title: 'New Product', price: 29.99 };
+//   fetch('https://fakestoreapi.com/products', {
+//      method: 'POST',
+//      headers: { 'Content-Type': 'application/json' },
+//      body: JSON.stringify(product)
+// })
+//   .then(response => response.json())
+//   .then(data => console.log(data));
+
+  if (!respuesta.ok) {
+    throw new Error(`Error al crear el producto: ${respuesta.status}`);
+  }
+
+  return respuesta.json(); // Convierto la respuesta de la API a JSON y retorno el producto creado.
+}
 
 
-// Función para mostrar los comandos disponibles en caso que ingrese algo mal o un comando un sin implementar.
-function Comandos() {
+// Función para eliminar un producto por su ID
+// Esta función crea una solicitud DELETE a la API para borrar el producto especificado.
+async function eliminarProduct(productId) {
+  const respuesta = await fetch(`${API_URL}/products/${productId}`, { //
+    method: 'DELETE'
+  });
+
+// Ejemplo de Fake Store API para eliminar un producto por su ID usando fetch:
+//   fetch('https://fakestoreapi.com/products/1', {
+//   method: 'DELETE'
+// })
+//   .then(response => response.json())
+//   .then(data => console.log(data));
+
+  if (!respuesta.ok) {
+    throw new Error(`Error al eliminar el producto ${productId}: ${respuesta.status}`);// Si la respuesta no es exitosa, muestro un mensaje de error que incluye el ID del producto y el código de estado de la respuesta.
+  }
+
+  return respuesta.json(); // Convierto la respuesta de la API a JSON y retorno el resultado.
+}
+
+
+
+
+// Función para mostrar los comandos disponibles en caso que ingrese algo mal o un comando sin implementar.
+function comandos() {
   console.log('Comandos disponibles:');
   console.log('  npm run start GET products');
   console.log('  npm run start GET products/<productId>');
+  console.log('  npm run start POST products <title> <price> <category>');
+  console.log('  npm run start DELETE products/<productId>');
 }
 
 
 // Armado de una funcion principal para ordenar el codigo y manejar la logica de trabajo, tambien me permite manejar errores e implementar nuevos comandos facilmente a futuro.
 async function main() {
   try {
-    if (method !== 'GET' || !resource) {  // Verifico que el método sea 'GET' y que se haya proporcionado un recurso. 
-      Comandos(); // Si no se cumple alguna de estas condiciones, muestro los comandos disponibles y salgo de la función.
+    if (!resource) {  // caso que no se pase un recurso por consolo. 
+      comandos(); // Muestro los comandos disponibles y salgo de la función.
       return;
     }
 
-    if (resource === 'products') {  // Si el recurso es 'products', llamo a la función getProducts para obtener la lista de productos, luego imprimo los productos en la consola y salgo de la función.
+    if (method === 'GET' && resource === 'products') {  // verifico que sea una solicitud get y que el recurso es 'products', llamo a la función getProducts para obtener la lista de productos, luego imprimo los productos en la consola y salgo de la función.
       const products = await getProducts();
       console.log(products);
       return;
     }
-
+    // llegaodo a esta instancia entiendo que el recurso no es "products" o el metodo no es "GET", entonces verifico si el recurso tiene el formato "products/<productId>" para obtener un producto por su ID.
     // Creo una constante donde nombre es el nombre del recurso (en este caso 'products') y productId es el ID del producto que quiero pedirle a la api.
     // Con el método split('/') divido el recurso con el carácter '/' como separador. Asi obtengo el nombre del recurso y el ID del producto.
     const [nombre, productId] = resource.split('/'); 
 
-    if (nombre === 'products' && productId) { // verifico que el nommbre del recurso sea 'products' y que se haya proporcionado un ID de producto.
+    if (method === 'GET' && nombre === 'products' && productId) { // verifico el metodo, que el nommbre del recurso sea 'products' y que se haya proporcionado un ID de producto.
       const product = await getProductId(productId); // llamo a la función getProductId con el ID del producto para obtener los detalles del producto solicitado.
       console.log(product); // imprimo los detalles del producto en la consola.
       return;
     }
 
+    // en esta instancia entiendo que el metodo no es "GET", entonces verifico si el metodo es "DELETE" y el recurso tiene el formato "products/<productId>" para eliminar un producto por su ID.
+    if (method === 'DELETE' && nombre === 'products' && productId) { // verifico si el metodo es DELETE y que el recurso sea products/<productId>.
+      const productoEliminado = await eliminarProduct(productId); // llamo a la función eliminarProduct para borrar el producto en la API.
+      console.log(productoEliminado); // imprimo en consola el resultado de la eliminación.
+      return;
+    }
+
+    // en esta instancia entiendo que el metodo no es "GET" ni "DELETE", entonces verifico si el metodo es "POST" y el recurso tiene el formato "products" para crear un producto nuevo.
+    if (method === 'POST' && resource === 'products' && title && price && category) { // Verifico que el método sea POST, el recurso sea products y que se hayan pasado title, price y category.
+      const productoCreado = await crearProduct(title, price, category); // llamo a la función crearProduct para enviar los datos del producto nuevo a la API.
+      console.log(productoCreado); // imprimo en consola el resultado que devuelve la API.
+      return;
+    }
+
     // Si el recurso no coincide con ninguno de los casos anteriores, muestro un mensaje indicando que el comando no es reconocido y luego muestro los comandos disponibles.
     console.log('Comando no reconocido.');
-    Comandos();
+    comandos();
     // En caso de que ocurra algún error durante la ejecución de las funciones, el bloque catch captura el error y muestra su mensaje en la consola.
   } catch (error) {
-    console.error(error);
+    //console.error(error);
     console.error(error.message);
   }
 }
